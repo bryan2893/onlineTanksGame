@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <script src="ImageManager.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="scripts/inicio.js"></script>
+    <style>
+        canvas{
+            display: block;
+            margin: 0 auto;
+        }
+
+        img{
+            display: none;
+        }
+        
+    </style>
+</head>
+<body>
+    <canvas id="gameField" style="background-color: black;"></canvas>
+</body>
+<script>
+
+    let objetos = [];
+
+    class Area{
+        constructor(x,y,w,h){
+            this.x = x;
+            this.y = y;
+            this.w = w;
+            this.h = h;
+        }
+
+        setX(x){
+            this.x = x;
+        }
+
+        setY(y){
+            this.y = y;
+        }
+
+        getLeft(){
+            return this.x;
+        }
+
+        getRight(){
+            return this.x + this.w - 1;
+        }
+
+        getTop(){
+            return this.y;
+        }
+
+        getBottom(){
+            return this.y + this.h -1;
+        }
+
+        interseca(other){
+            return !(this.getLeft() > other.getRight() ||
+            this.getRight() < other.getLeft() ||
+            this.getTop() > other.getBottom() ||
+            this.getBottom() < other.getTop());
+        }
+    }
+
+    class Muro{
+        constructor(area){
+            this.area = area;
+        }
+
+        construir(ctx,image){
+            ctx.drawImage(image, this.area.x, this.area.y);
+        }
+    }
+
+    class Bala{
+        constructor(ctx,posx,posy,img,area){
+            this.posx = posx;
+            this.posy = posy;
+            this.ctx = ctx;
+            this.idInterval = null;
+            this.velocity = 3;
+            this.img = img;
+            this.area = area;//objeto Area
+        }
+
+        limpiarInterval(){
+            clearInterval(this.idInterval);
+            this.ctx.clearRect(this.posx, this.posy, 8,8);
+        }
+        
+        mover(direccion){
+            switch (direccion) {
+
+                case 'arriba':
+
+                case 'abajo':
+
+                case 'izquierda':
+
+                case 'derecha':
+                    this.posx += this.velocity;
+                    this.area.setX(this.posx);
+                    let referenceThis = this;
+                    for (let i = 0; i<objetos.length;i++){
+                        let objeto = objetos[i];
+                        if(referenceThis.area.interseca(objeto.area)){
+                            console.log("Pegado!");
+                            referenceThis.limpiarInterval();
+                            return;
+                        }
+                    }
+
+                    break;
+            }
+        }
+
+        animate(){
+            let referenceSelf = this;
+            this.idInterval = setInterval(function(){
+                if(referenceSelf.posx > 600-8){
+                    referenceSelf.limpiarInterval();
+                    return;
+                }
+                referenceSelf.ctx.clearRect(referenceSelf.posx, referenceSelf.posy, 8,8);
+                referenceSelf.mover('derecha');
+                referenceSelf.ctx.drawImage(referenceSelf.img, referenceSelf.posx, referenceSelf.posy);
+            },10);
+        }
+    }
+
+    /*Configuracion del canvas*/
+    let canvas = document.getElementById("gameField");
+    canvas.width = 600;
+    canvas.height = 600;
+    let ctx = canvas.getContext("2d");
+
+    /*Manejo de imagenes*/
+    let cantidadTankesCargados = 0;
+    let imgMuroCargada = false;
+
+    let image = new Image();
+    image.src = 'images/tanke_player_1_derecha.png';
+    let tankeIzq = new Image();
+    tankeIzq.src = 'images/tanke_player_1_izquierda.png';
+    let tankeArr = new Image();
+    tankeArr.src = 'images/tanke_player_1_arriba.png';
+    let tankeAbj = new Image();
+    tankeAbj.src = 'images/tanke_player_1_abajo.png';
+    let balaDer = new Image();
+    balaDer.src = 'images/bullet_right.png';
+    let muroImage = new Image();
+    muroImage.src = 'images/wall_brick.png';
+
+    muroImage.onload = function(){
+        let areaMuro = new Area(500,600-32,16,16);
+        let muro = new Muro(areaMuro);
+        muro.construir(ctx,muroImage);
+        objetos.push(muro);
+    }
+
+    tankeArr.onload = function(){
+        cantidadTankesCargados += 1;
+        ctx.drawImage(tankeArr, 0, 600-32);
+    }
+
+    let x = 0;
+    let y = 600-32;
+
+    let bx = 0;
+    let by = 0;
+
+    function dispararDerecha(){
+        bx += 2;
+    }
+    
+    function moverDerecha(){
+        x += 5;
+    }
+
+    function moverIzquierda(){
+        x -= 5;
+    }
+
+    function moverAbajo(){
+        y += 5;
+    }
+
+    function moverArriba(){
+        y -= 5;
+    }
+
+    intervalBalaId = null;
+    
+    document.onkeydown = function(e) {
+        switch (e.keyCode) {
+            case 37:
+                ctx.clearRect(x, y, 32,32);
+                moverIzquierda();
+                ctx.drawImage(tankeIzq, x, y);
+                break;
+            case 38:
+                ctx.clearRect(x, y, 32,32);
+                moverArriba();
+                ctx.drawImage(tankeArr, x, y);
+                break;
+            case 39:
+                ctx.clearRect(x, y, 32,32);
+                moverDerecha();
+                ctx.drawImage(image, x, y);
+                break;
+            case 40:
+                ctx.clearRect(x, y, 32,32);
+                moverAbajo();
+                ctx.drawImage(tankeAbj, x, y);
+                break;
+
+            case 32:
+                bx = x+32;
+                by = y+12;
+                ctx.drawImage(balaDer,bx,by);
+                let area = new Area(bx,by,8,8);
+                let bala = new Bala(ctx,bx,by,balaDer,area);
+                bala.animate();
+                break;
+        }
+    };
+
+    let areaMuro = new Area(0,0,32,32);
+    
+    let muro = new Muro(areaMuro);
+
+    muro.construir(ctx,muroImage);
+
+
+
+    let point1 = new Area(0,0,32,32);
+    let point2 = new Area(32,0,8,8);
+
+    console.log("Interseca punto 1 con 2 ?: "+ point1.interseca(point2));
+    
+</script>
+</html>
