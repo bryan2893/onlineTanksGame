@@ -8,6 +8,7 @@
     <script src="ImageManager.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="scripts/Tank.js"></script>
     <script src="scripts/inicio.js"></script>
     <style>
         canvas{
@@ -26,6 +27,7 @@
 </body>
 <script>
 
+    /*
     let objetos = [];
 
     class Area{
@@ -134,13 +136,13 @@
         }
     }
 
-    /*Configuracion del canvas*/
+  
     let canvas = document.getElementById("gameField");
     canvas.width = 600;
     canvas.height = 600;
     let ctx = canvas.getContext("2d");
 
-    /*Manejo de imagenes*/
+   
     let cantidadTankesCargados = 0;
     let imgMuroCargada = false;
 
@@ -195,54 +197,6 @@
         y -= 5;
     }
 
-    intervalBalaId = null;
-    
-    document.onkeydown = function(e) {
-        switch (e.keyCode) {
-            case 37:
-                ctx.clearRect(x, y, 32,32);
-                moverIzquierda();
-                ctx.drawImage(tankeIzq, x, y);
-                break;
-            case 38:
-                ctx.clearRect(x, y, 32,32);
-                moverArriba();
-                ctx.drawImage(tankeArr, x, y);
-                break;
-            case 39:
-                ctx.clearRect(x, y, 32,32);
-                moverDerecha();
-                ctx.drawImage(image, x, y);
-                break;
-            case 40:
-                ctx.clearRect(x, y, 32,32);
-                moverAbajo();
-                ctx.drawImage(tankeAbj, x, y);
-                break;
-
-            case 32:
-                bx = x+32;
-                by = y+12;
-                ctx.drawImage(balaDer,bx,by);
-                let area = new Area(bx,by,8,8);
-                let bala = new Bala(ctx,bx,by,balaDer,area);
-                bala.animate();
-                break;
-        }
-    };
-
-    let areaMuro = new Area(0,0,32,32);
-    
-    let muro = new Muro(areaMuro);
-
-    muro.construir(ctx,muroImage);
-
-
-
-    let point1 = new Area(0,0,32,32);
-    let point2 = new Area(32,0,8,8);
-
-    console.log("Interseca punto 1 con 2 ?: "+ point1.interseca(point2));
-    
+    */
 </script>
 </html>
