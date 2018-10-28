@@ -18,8 +18,6 @@ class Tank{
     move(direction){
         let x = this.area.getX();
         let y = this.area.getY();
-        let wid = this.area.getWidth();
-        let hei = this.area.getHeiht();
 
         switch (direction) {
             case 'arriba':
@@ -70,29 +68,27 @@ class Tank{
         let bulletInformation = {};
         switch (this.actualDirection) {
             case 'arriba':
-                bulletInformation.bulletId = this.id;
                 bulletInformation.x = this.area.getX() + 12;
                 bulletInformation.y = this.area.getY();
                 break;
-            case 'abajo':
-                bulletInformation.bulletId = this.id;
+            case 'abajo'://bien
                 bulletInformation.x = this.area.getX() + 12;
                 bulletInformation.y = this.area.getY() + this.area.getHeiht();
                 break;
             case 'izquierda':
-                bulletInformation.bulletId = this.id;
                 bulletInformation.x = this.area.getLeft();
                 bulletInformation.y = this.area.getY() + 12; //12 para que la imagen de la bala quede centrada. el tanke es de 32x32 y la bala de 8x8
                 break;
-            case 'derecha':
-                bulletInformation.bulletId = this.id;
+            case 'derecha'://bien
                 bulletInformation.x = this.area.getRight();
                 bulletInformation.y = this.area.getY() + 12; //12 para que la imagen de la bala quede centrada. el tanke es de 32x32 y la bala de 8x8
                 break;
         }
 
-        bulletInformation.w = this.area.getWidth();
-        bulletInformation.h = this.area.getHeiht();
+        //el tamaño de la imagen de balas es de 8 x 8;
+        bulletInformation.bulletId = this.id;
+        bulletInformation.w = 8; 
+        bulletInformation.h = 8;
         bulletInformation.direction = this.actualDirection;
 
         return bulletInformation;

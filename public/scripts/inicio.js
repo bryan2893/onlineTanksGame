@@ -6,6 +6,8 @@ $(document).ready(function(){
 
     let inTheOtherSideBullets = [];
 
+    let localBulletsFlying = [];
+
     let getTankThatIsInTheOtherSide = function(tankId){
         for(let i = 0; i<inTheOtherSideTanks.length; i++){
             if(inTheOtherSideTanks[i].id === tankId){
@@ -42,6 +44,24 @@ $(document).ready(function(){
         }
     }
 
+    let getLocalBulet = function(bulletId){
+        for(let i = 0; i<localBulletsFlying.length; i++){
+            if(localBulletsFlying[i].id === bulletId){
+                return localBulletsFlying[i];
+            }
+        }
+
+        return null;
+    }
+
+    let deleteLocalBullet = function(bulletId){
+        for(let i = 0; i<localBulletsFlying.length; i++){
+            if(localBulletsFlying[i].id === bulletId){
+                localBulletsFlying.splice(i, 1);
+            }
+        }
+    }
+
     let getBulletImageByDirection = function(direction){
         if(direction === 'arriba'){
             return ImageManager.getImage('bullet_up');
@@ -71,10 +91,12 @@ $(document).ready(function(){
 
         socket.on('update-scenario-by-first-time',function(data){
             listaTankes = data.lista_de_tankes;
+            lista_balas = data.lista_balas;
 
             console.log(listaTankes);
             //se recorre la lista para crear los tankes y agregarlos en la lista local "inTheOtherSideTanks"
             
+            //agrega los tankes en el juego al momento de la conexion al servidor.
             for(let i = 0; i<listaTankes.length;i++){
                 let data = listaTankes[i];
 
@@ -92,6 +114,25 @@ $(document).ready(function(){
 
                 inTheOtherSideTanks.push(tankThatIsOnline);
 
+            }
+
+            //agregar las balas existentes en el juego en el momento de la conexion.
+            for(let j = 0; j<lista_balas.length;j++){
+                let data = lista_balas[j];
+
+                let area = new Area(data.area.x,data.area.y,data.area.w,data.area.h);
+
+                let direction = data.direction; //orientacion de la bala.
+
+                let imageBullet = getBulletImageByDirection(direction);
+                
+                let bulletThatIsOnline = new Bullet(data.id,ctx,imageBullet,area,data.direction);  
+
+
+                bulletThatIsOnline.display(bulletThatIsOnline.direction);
+
+                inTheOtherSideBullets.push(bulletThatIsOnline);
+                
             }
 
         });
@@ -169,10 +210,9 @@ $(document).ready(function(){
         socket.on('another-client-bullet-is-moving',function(data){
             let bulletOfOtherPlayerThatIsMoving = getBulletThatIsInTheOtherSide(data.bulletId);
             if(bulletOfOtherPlayerThatIsMoving){
-                bulletOfOtherPlayerThatIsMoving.move(bulletOfOtherPlayerThatIsMoving.direction, null);
+                bulletOfOtherPlayerThatIsMoving.move(bulletOfOtherPlayerThatIsMoving.direction);
             }
         });
-        
     });
 
     //*******Movimiento de tanke y disparo con teclas direccionales y tecla espacio**
@@ -196,11 +236,28 @@ $(document).ready(function(){
                 break;
             case 32:
                 let shootInformation = tankeLocal.loadBulletShootingInformation();
-                socket.emit('shoot',shootInformation);
+
+                let bulletImage =  getBulletImageByDirection(shootInformation.direction);
+
                 let area = new Area(shootInformation.x,shootInformation.y,shootInformation.w,shootInformation.h);
-                let bulletImage = getBulletImageByDirection(shootInformation.direction);
-                let bulletAnimated = new Bullet(shootInformation.bulletId,ctx,bulletImage,area,shootInformation.direction);
-                bulletAnimated.animate(socket,bulletAnimated.direction);
+
+                let bulletSooted = new Bullet(null,ctx,bulletImage,area,shootInformation.direction);
+
+                console.log("informacion dada por el tanke local para el disparo "+JSON.stringify(shootInformation));
+
+                let idInterval = setInterval(function(){
+                    bulletSooted.move(bulletSooted.direction);
+                    socket.emit('bullet-step',shootInformation);
+                },10);
+
+
+                shootInformation.bulletId += idInterval; //se agreaga el id del intervalo shootInformation que va a ser pasado al servidor de sockets para que lo gaurde.
+                bulletSooted.setId(shootInformation.bulletId);
+
+                localBulletsFlying.push(bulletSooted);
+
+                socket.emit('shoot',shootInformation);
+
                 break;
         }
     };

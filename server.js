@@ -26,7 +26,7 @@ io.on('connect',function(socketPlayer){
 
     //*******************************Logica para manejo de sesiones de jugadores(tankes)******************
 
-    socketPlayer.emit('update-scenario-by-first-time',{lista_de_tankes: sessionsManager.getListOfTanksInJsonFormat()});
+    socketPlayer.emit('update-scenario-by-first-time',{lista_de_tankes: sessionsManager.getListOfTanksInJsonFormat(),lista_balas:bulletsManager.getListOfBulletsInJsonFormat()});
 
     //se crea un nuevo tanke en el servidor por cada conexion nueva...
     let newTank = new Tank(socketPlayer.id,'player',new Area(0,0,32,32),5,'derecha');
@@ -65,15 +65,6 @@ io.on('connect',function(socketPlayer){
     //cuando un cliente dispare...
     socketPlayer.on('shoot',function(data){
 
-        /*
-            bulletInformation.bulletId
-            bulletInformation.x 
-            bulletInformation.y
-            bulletInformation.w 
-            bulletInformation.h
-            bulletInformation.direction
-        */
-
         let area = new Area(data.x,data.y,data.w,data.h);
         let bullet = new Bullet(data.bulletId,3,area,data.direction);
 
@@ -89,15 +80,12 @@ io.on('connect',function(socketPlayer){
         if(bulletRunnig){
             bulletRunnig.move(data.direccion);
         }
-
-        console.log("bullet is runnig");
-
+        
         //IMPORTANTE: aqui hay que verificar cada paso que dé la bala, para detectar cuando choque con algo.
 
         //se le anuncia a los demas clientes que la bala se esta moviendo.
         socketPlayer.broadcast.emit('another-client-bullet-is-moving',{bulletId:data.bulletId});
     });
-    
 });
 
 httpServer.listen(3000,function(){

@@ -15,7 +15,7 @@ class BulletsManager{
     getBulletsFlying(){
         return this.bullets;
     }
-
+    
     getNumberOfBulletsOnline(){
         return this.bullets.length;
     }

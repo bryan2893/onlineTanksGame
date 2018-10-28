@@ -5,26 +5,32 @@ class Bullet{
         this.area = area;//objeto Area
         this.direction = direction;
     }
-
-    setX(value){
-        this.area.setX(value);
-    }
-
-    setY(value){
-        this.area.setY(value);
-    }
     
     move(direccion){
         switch (direccion) {
             case 'arriba':
-                this.area.setY(this.posy - this.velocity);
+                this.area.setY(this.area.getY() - this.velocity);
             case 'abajo':
-                this.area.setY(this.posy + this.velocity);
+                this.area.setY(this.area.getY() + this.velocity);
             case 'izquierda':
-                this.area.setX(this.posx - this.velocity);
+                this.area.setX(this.area.getX() - this.velocity);
             case 'derecha':
-                this.area.setX(this.posx + this.velocity);
+                this.area.setX(this.area.getX() + this.velocity);
                 break;
+        }
+    }
+
+    getJsonRepresentation(){
+        return {
+            id : this.id,
+            area : {
+                x : this.area.x,
+                y : this.area.y,
+                w : this.area.w,
+                h : this.area.h
+            },
+            velocity : this.velocity,
+            direction: this.direction
         }
     }
 }
