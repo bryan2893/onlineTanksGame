@@ -4,6 +4,15 @@ class SessionsManager{
         this.tanksOnline = [];
     }
 
+    findTank(tankId){
+        for(let i = 0; i<this.tanksOnline.length; i++){
+            if(this.tanksOnline[i].id === tankId){
+                return this.tanksOnline[i];
+            }
+        }
+        return null;
+    }
+
     getTanksOnline(){
         return this.tanksOnline;
     }
@@ -22,6 +31,15 @@ class SessionsManager{
                 this.tanksOnline.splice(i, 1);//elimina el tanke con el id coincidente.
             }
         }
+    }
+
+    getListOfTanksInJsonFormat(){
+        let list = [];
+        for(let i = 0; i<this.tanksOnline.length; i++){
+            let tankInJsonFormat = this.tanksOnline[i].getJsonRepresentation();
+            list.push(tankInJsonFormat);
+        }
+        return list;
     }
 }
 

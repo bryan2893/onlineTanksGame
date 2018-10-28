@@ -22,24 +22,41 @@ const io = require('socket.io')(httpServer,{pingInterval: 1000,pingTimeout: 1500
 
 io.on('connect',function(socketPlayer){
 
+    socketPlayer.emit('update-scenario-by-first-time',{lista_de_tankes: sessionsManager.getListOfTanksInJsonFormat()});
+
     //se crea un nuevo tanke en el servidor por cada conexion nueva...
-    let newTank = new Tank(socketPlayer.id,'player',new Area(0,0,32,32),5);
+    let newTank = new Tank(socketPlayer.id,'player',new Area(0,0,32,32),5,'derecha');
 
     //Se pone el tanke online con el manejador de sesiones.
     sessionsManager.setTank(newTank);
     console.log("Tanke online! hay "+sessionsManager.getNumberOfTanksOnline()+" tankes online");
 
-    //socketPlayer.emit('create-tank',{nombre:'P1',x:0,y:0,width:32,height:32});
+    console.log(newTank.getJsonRepresentation());
+
+    //Se envia el tanke creado al cliente conectado.
+    socketPlayer.emit('create-local-tank',newTank.getJsonRepresentation());
+
+    //Se le avisa a los demas jugadores de la creacion de un tanke.
+    socketPlayer.broadcast.emit('new-tank-online', newTank.getJsonRepresentation());
+
 
     socketPlayer.on('disconnect',function(){
         sessionsManager.disconnectTank(socketPlayer.id);
+        socketPlayer.broadcast.emit('tank-off-line',{idTanke:socketPlayer.id});
         console.log("Tanke desconectado correctamente ahora hay "+sessionsManager.getTanksOnline().length+" tankes online");
     });
 
     socketPlayer.on('register-movement',function(data){
         //hacer algo con el movimiento registrado!
+        let tankThatIsReporting = sessionsManager.findTank(data.idTanke);
+
+        if(tankThatIsReporting){
+            tankThatIsReporting.move(data.direccion);
+        }
+        
+        socketPlayer.broadcast.emit('tank-is-moving',{idTanke:socketPlayer.id,direccion:data.direccion});
     });
-    
+
 });
 
 httpServer.listen(3000,function(){
