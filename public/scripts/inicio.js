@@ -4,19 +4,56 @@ $(document).ready(function(){
     
     let inTheOtherSideTanks = [];//lista de los tankes que se encuentran conectados del otro lado.
 
+    let inTheOtherSideBullets = [];
+
     let getTankThatIsInTheOtherSide = function(tankId){
         for(let i = 0; i<inTheOtherSideTanks.length; i++){
             if(inTheOtherSideTanks[i].id === tankId){
                 return inTheOtherSideTanks[i];
             }
         }
+
+        return null;
     };
 
     let deleteTankThatIsInTheOtherSide = function(tankId){
         for(let i = 0; i<inTheOtherSideTanks.length; i++){
             if(inTheOtherSideTanks[i].id === tankId){
-                inTheOtherSideTanks.splice(i, 1);//elimina el tanke con el id coincidente.
+                inTheOtherSideTanks.splice(i, 1);
             }
+        }
+    };
+
+    let getBulletThatIsInTheOtherSide = function(bulletId){
+        for(let i = 0; i<inTheOtherSideBullets.length; i++){
+            if(inTheOtherSideBullets[i].id === bulletId){
+                return inTheOtherSideBullets[i];
+            }
+        }
+
+        return null;
+    }
+
+    let deleteBulletThatIsInTheOtherSide = function(bulletId){
+        for(let i = 0; i<inTheOtherSideBullets.length; i++){
+            if(inTheOtherSideBullets[i].id === bulletId){
+                inTheOtherSideBullets.splice(i, 1);
+            }
+        }
+    }
+
+    let getBulletImageByDirection = function(direction){
+        if(direction === 'arriba'){
+            return ImageManager.getImage('bullet_up');
+        }else if(direction === 'abajo'){
+            return ImageManager.getImage('bullet_down');
+        }else if(direction === 'izquierda'){
+            return ImageManager.getImage('bullet_left');
+        }else if(direction === 'derecha'){
+            return ImageManager.getImage('bullet_right');
+        }
+        else{
+            return null;
         }
     };
 
@@ -107,6 +144,35 @@ $(document).ready(function(){
             }
         });
 
+        /*****************************LOGICA PARA DISPARO DE LOS TANKES********************** */
+        socket.on('other-player-shoot-by-first-time',function(data){
+            /*
+                data.bulletId
+                data.x 
+                data.y
+                data.w 
+                data.h
+                data.direction
+            */
+
+            let imageBullet = getBulletImageByDirection(data.direction);
+            let area = new Area(data.x,data.y,data.w,data.h);
+
+            let bulletShootByOtherPlayer = new Bullet(data.bulletId,ctx,imageBullet,area,data.direction);
+
+            bulletShootByOtherPlayer.display();
+
+            inTheOtherSideBullets.push(bulletShootByOtherPlayer);
+
+        });
+
+        socket.on('another-client-bullet-is-moving',function(data){
+            let bulletOfOtherPlayerThatIsMoving = getBulletThatIsInTheOtherSide(data.bulletId);
+            if(bulletOfOtherPlayerThatIsMoving){
+                bulletOfOtherPlayerThatIsMoving.move(bulletOfOtherPlayerThatIsMoving.direction, null);
+            }
+        });
+        
     });
 
     //*******Movimiento de tanke y disparo con teclas direccionales y tecla espacio**
@@ -125,11 +191,16 @@ $(document).ready(function(){
                 socket.emit('register-movement',{idTanke:tankeLocal.id,direccion:'derecha'});
                 break;
             case 40:
-            socket.emit('register-movement',{idTanke:tankeLocal.id,direccion:'abajo'});
                 tankeLocal.move('abajo');
+                socket.emit('register-movement',{idTanke:tankeLocal.id,direccion:'abajo'});
                 break;
             case 32:
-                console.log("disparó!!");
+                let shootInformation = tankeLocal.loadBulletShootingInformation();
+                socket.emit('shoot',shootInformation);
+                let area = new Area(shootInformation.x,shootInformation.y,shootInformation.w,shootInformation.h);
+                let bulletImage = getBulletImageByDirection(shootInformation.direction);
+                let bulletAnimated = new Bullet(shootInformation.bulletId,ctx,bulletImage,area,shootInformation.direction);
+                bulletAnimated.animate(socket,bulletAnimated.direction);
                 break;
         }
     };

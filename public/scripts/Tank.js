@@ -65,6 +65,39 @@ class Tank{
         }
     }
 
+    //crea una bala que sale desde el "cañon" de este tanke, tomando su actualdirection como referencia.
+    loadBulletShootingInformation(){
+        let bulletInformation = {};
+        switch (this.actualDirection) {
+            case 'arriba':
+                bulletInformation.bulletId = this.id;
+                bulletInformation.x = this.area.getX() + 12;
+                bulletInformation.y = this.area.getY();
+                break;
+            case 'abajo':
+                bulletInformation.bulletId = this.id;
+                bulletInformation.x = this.area.getX() + 12;
+                bulletInformation.y = this.area.getY() + this.area.getHeiht();
+                break;
+            case 'izquierda':
+                bulletInformation.bulletId = this.id;
+                bulletInformation.x = this.area.getLeft();
+                bulletInformation.y = this.area.getY() + 12; //12 para que la imagen de la bala quede centrada. el tanke es de 32x32 y la bala de 8x8
+                break;
+            case 'derecha':
+                bulletInformation.bulletId = this.id;
+                bulletInformation.x = this.area.getRight();
+                bulletInformation.y = this.area.getY() + 12; //12 para que la imagen de la bala quede centrada. el tanke es de 32x32 y la bala de 8x8
+                break;
+        }
+
+        bulletInformation.w = this.area.getWidth();
+        bulletInformation.h = this.area.getHeiht();
+        bulletInformation.direction = this.actualDirection;
+
+        return bulletInformation;
+    }
+
     disAppear(){
         let x = this.area.getX();
         let y = this.area.getY();
