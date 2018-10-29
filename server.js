@@ -48,18 +48,24 @@ io.on('connect',function(socketPlayer){
     //Se le avisa a los demas jugadores de la creacion de un tanke.
     socketPlayer.broadcast.emit('new-tank-online', newTank.getJsonRepresentation());
 
-
     socketPlayer.on('disconnect',function(){
         sessionsManager.disconnectTank(socketPlayer.id);
         socketPlayer.broadcast.emit('tank-off-line',{idTanke:socketPlayer.id});
         console.log("Tanke desconectado correctamente ahora hay "+sessionsManager.getTanksOnline().length+" tankes online");
     });
 
+
+    //registra el movimiento del tanke por parte del cliente.
     socketPlayer.on('register-movement',function(data){
         //hacer algo con el movimiento registrado!
         let tankThatIsReporting = sessionsManager.findTank(data.idTanke);
 
         if(tankThatIsReporting){
+            let posibleChokWall = wallWatcher.verifyIfTankChokWithAnyWall(tankThatIsReporting);
+            if(posibleChokWall){
+                
+            }
+
             tankThatIsReporting.move(data.direccion);
         }
         

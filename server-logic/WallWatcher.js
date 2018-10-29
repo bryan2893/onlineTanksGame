@@ -33,6 +33,16 @@ class WallWatcher{
         }
         return list;
     }
+
+    verifyIfTankChokWithAnyWall(tank){
+        for(let i = 0; i<this.walls.length; i++){
+            let wall = this.walls[i];
+            if(tank.area.interseca(wall.area)){
+                return wall;
+            }
+        }
+        return null;
+    }
 }
 
 module.exports = WallWatcher;

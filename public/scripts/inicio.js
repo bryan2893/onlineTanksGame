@@ -117,6 +117,7 @@ $(document).ready(function(){
             console.log(listaTankes);
             //se recorre la lista para crear los tankes y agregarlos en la lista local "inTheOtherSideTanks"
 
+            //Pinta los muros del juego******
             escenaryPainter(data.walls,ctx);
             
             //agrega los tankes en el juego al momento de la conexion al servidor.
