@@ -18,7 +18,6 @@ let wallConstructor = new WallConstructor();//se utiliza cada vez que se quiere 
 let wallWatcher = new WallWatcher(wallConstructor.getWalls());
 
 
-
 const httpServer = http.createServer(app);//Se crea el servidor http y se envia como paramtero el app de express.
 
 app.use('/',express.static('public'));
@@ -60,18 +59,23 @@ io.on('connect',function(socketPlayer){
         //hacer algo con el movimiento registrado!
         let tankThatIsReporting = sessionsManager.findTank(data.idTanke);
 
+        //HACER ALGO PORQUE ESTAMOS FEOS
+
         if(tankThatIsReporting){
-            let posibleChokWall = wallWatcher.verifyIfTankChokWithAnyWall(tankThatIsReporting);
+            let tankVelocity = tankThatIsReporting.tankVelocity;
+
+            let tankAreaProve = wallWatcher.replicateFutureTankAreaForProve(tankThatIsReporting,data.direccion);
+
+            let posibleChokWall = wallWatcher.verifyIfAreaChokWithAnyWall(tankAreaProve);
             if(posibleChokWall){
-                
+                socketPlayer.emit('movement-confirmation',{mensaje:"no"});
+            }else{
+                socketPlayer.emit('movement-confirmation',{mensaje:"si",direccion:data.direccion});
+                tankThatIsReporting.move(data.direccion);
+                socketPlayer.broadcast.emit('tank-is-moving',{idTanke:socketPlayer.id,direccion:data.direccion});
             }
-
-            tankThatIsReporting.move(data.direccion);
         }
-        
-        socketPlayer.broadcast.emit('tank-is-moving',{idTanke:socketPlayer.id,direccion:data.direccion});
     });
-
 
     /*****************************Logica para disparos del tanke***********************************/
 

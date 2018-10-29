@@ -237,25 +237,33 @@ $(document).ready(function(){
                 bulletOfOtherPlayerThatIsMoving.move(bulletOfOtherPlayerThatIsMoving.direction);
             }
         });
+
+
+        socket.on('movement-confirmation',function(data){
+            if(data.mensaje === "si"){//si se puede mover
+                tankeLocal.move(data.direccion);
+            }
+        });
+        
     });
 
     //*******Movimiento de tanke y disparo con teclas direccionales y tecla espacio**
     document.onkeydown = function(e) {
         switch (e.keyCode) {
             case 37:
-                tankeLocal.move('izquierda');
+                //tankeLocal.move('izquierda');
                 socket.emit('register-movement',{idTanke:tankeLocal.id,direccion:'izquierda'});
                 break;
             case 38:
                 socket.emit('register-movement',{idTanke:tankeLocal.id,direccion:'arriba'});
-                tankeLocal.move('arriba');
+                //tankeLocal.move('arriba');
                 break;
             case 39:
-                tankeLocal.move('derecha');
+                //tankeLocal.move('derecha');
                 socket.emit('register-movement',{idTanke:tankeLocal.id,direccion:'derecha'});
                 break;
             case 40:
-                tankeLocal.move('abajo');
+                //tankeLocal.move('abajo');
                 socket.emit('register-movement',{idTanke:tankeLocal.id,direccion:'abajo'});
                 break;
             case 32:
