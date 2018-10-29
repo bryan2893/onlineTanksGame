@@ -77,9 +77,30 @@ $(document).ready(function(){
         }
     };
 
+
+    //Pinta el escenario dado un conjunto de elementos block;
+    let escenaryPainter = function(listOfWalls,context){
+
+        /*
+        area : {
+                x : this.area.x,
+                y : this.area.y,
+                w : this.area.w, //normalmente w y h son de 16, la imagen es de 16x16
+                h : this.area.h
+            }
+        */
+
+        let wallImage = ImageManager.getImage('wall_brick');
+        for (let index = 0; index < listOfWalls.length; index++) {
+            const element = listOfWalls[index];
+            context.drawImage(wallImage, element.area.x, element.area.y);
+        }
+
+    };
+
     let canvas = document.getElementById("gameField");
-    canvas.width = 600;
-    canvas.height = 600;
+    canvas.width = 800;
+    canvas.height = 560;
     let ctx = canvas.getContext("2d");
 
     //*******************Logica de sockets.
@@ -95,6 +116,8 @@ $(document).ready(function(){
 
             console.log(listaTankes);
             //se recorre la lista para crear los tankes y agregarlos en la lista local "inTheOtherSideTanks"
+
+            escenaryPainter(data.walls,ctx);
             
             //agrega los tankes en el juego al momento de la conexion al servidor.
             for(let i = 0; i<listaTankes.length;i++){

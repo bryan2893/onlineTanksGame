@@ -8,9 +8,16 @@ let BulletsManager = require('./server-logic/BulletsManager');
 let Tank = require('./server-logic/Tank');
 let Area = require('./server-logic/Area');
 let Bullet = require('./server-logic/Bullet');
+let WallConstructor = require('./server-logic/WalleConstructor');
+let WallWatcher = require('./server-logic/WallWatcher');
 
 let sessionsManager = new SessionsManager();
 let bulletsManager = new BulletsManager();
+let wallConstructor = new WallConstructor();//se utiliza cada vez que se quiere reiniciar el juego.
+
+let wallWatcher = new WallWatcher(wallConstructor.getWalls());
+
+
 
 const httpServer = http.createServer(app);//Se crea el servidor http y se envia como paramtero el app de express.
 
@@ -26,7 +33,7 @@ io.on('connect',function(socketPlayer){
 
     //*******************************Logica para manejo de sesiones de jugadores(tankes)******************
 
-    socketPlayer.emit('update-scenario-by-first-time',{lista_de_tankes: sessionsManager.getListOfTanksInJsonFormat(),lista_balas:bulletsManager.getListOfBulletsInJsonFormat()});
+    socketPlayer.emit('update-scenario-by-first-time',{lista_de_tankes: sessionsManager.getListOfTanksInJsonFormat(),lista_balas:bulletsManager.getListOfBulletsInJsonFormat(),walls:wallWatcher.getListOfWallsInJsonFormat()});
 
     //se crea un nuevo tanke en el servidor por cada conexion nueva...
     let newTank = new Tank(socketPlayer.id,'player',new Area(0,0,32,32),5,'derecha');
