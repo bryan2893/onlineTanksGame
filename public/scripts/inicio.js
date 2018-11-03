@@ -8,6 +8,8 @@ $(document).ready(function(){
 
     let localBulletsFlying = [];
 
+    let localWalls = [];
+
     let getTankThatIsInTheOtherSide = function(tankId){
         for(let i = 0; i<inTheOtherSideTanks.length; i++){
             if(inTheOtherSideTanks[i].id === tankId){
@@ -77,23 +79,44 @@ $(document).ready(function(){
         }
     };
 
+    //Desaparece y elimina el muro de la lista de muros locales.
+    let deleteWall = function(wallId){
+        for(let i = 0; i<localWalls.length; i++){
+            let wall = localWalls[i];
+            if(wall.id === wallId){
+                wall.disAppear();
+                localWalls.splice(i, 1);
+            }
+        }
+    }
+
 
     //Pinta el escenario dado un conjunto de elementos block;
-    let escenaryPainter = function(listOfWalls,context){
-
+    let escenaryWallsConstructor = function(listOfWalls,context){
         /*
-        area : {
-                x : this.area.x,
-                y : this.area.y,
-                w : this.area.w, //normalmente w y h son de 16, la imagen es de 16x16
-                h : this.area.h
-            }
+        {
+            id: 0,
+            area : {
+                    x : this.area.x,
+                    y : this.area.y,
+                    w : this.area.w, //normalmente w y h son de 16, la imagen es de 16x16
+                    h : this.area.h
+                }
+        }
+        
         */
-
         let wallImage = ImageManager.getImage('wall_brick');
         for (let index = 0; index < listOfWalls.length; index++) {
-            const element = listOfWalls[index];
-            context.drawImage(wallImage, element.area.x, element.area.y);
+            let wallInJson = listOfWalls[index];
+
+            let area = new Area(wallInJson.area.x,wallInJson.area.y,wallInJson.area.w,wallInJson.area.h);
+
+            let wall = new Wall(wallInJson.id,area,context,wallImage);
+
+            localWalls.push(wall);
+
+            wall.display();
+
         }
 
     };
@@ -113,12 +136,10 @@ $(document).ready(function(){
         socket.on('update-scenario-by-first-time',function(data){
             listaTankes = data.lista_de_tankes;
             lista_balas = data.lista_balas;
+            lista_muros = data.walls;
 
-            console.log(listaTankes);
-            //se recorre la lista para crear los tankes y agregarlos en la lista local "inTheOtherSideTanks"
-
-            //Pinta los muros del juego******
-            escenaryPainter(data.walls,ctx);
+            //Pinta los muros del juego y los registra en la lista de muros locales******
+            escenaryWallsConstructor(lista_muros,ctx);
             
             //agrega los tankes en el juego al momento de la conexion al servidor.
             for(let i = 0; i<listaTankes.length;i++){
@@ -244,26 +265,22 @@ $(document).ready(function(){
                 tankeLocal.move(data.direccion);
             }
         });
-        
+
     });
 
     //*******Movimiento de tanke y disparo con teclas direccionales y tecla espacio**
     document.onkeydown = function(e) {
         switch (e.keyCode) {
             case 37:
-                //tankeLocal.move('izquierda');
                 socket.emit('register-movement',{idTanke:tankeLocal.id,direccion:'izquierda'});
                 break;
             case 38:
                 socket.emit('register-movement',{idTanke:tankeLocal.id,direccion:'arriba'});
-                //tankeLocal.move('arriba');
                 break;
             case 39:
-                //tankeLocal.move('derecha');
                 socket.emit('register-movement',{idTanke:tankeLocal.id,direccion:'derecha'});
                 break;
             case 40:
-                //tankeLocal.move('abajo');
                 socket.emit('register-movement',{idTanke:tankeLocal.id,direccion:'abajo'});
                 break;
             case 32:
@@ -275,7 +292,7 @@ $(document).ready(function(){
 
                 let bulletSooted = new Bullet(null,ctx,bulletImage,area,shootInformation.direction);
 
-                console.log("informacion dada por el tanke local para el disparo "+JSON.stringify(shootInformation));
+                console.log("Informacion dada por el tanke local para el disparo "+JSON.stringify(shootInformation));
 
                 let idInterval = setInterval(function(){
                     bulletSooted.move(bulletSooted.direction);
@@ -297,19 +314,16 @@ $(document).ready(function(){
     //Inicio de juego********************
     let iniciarJuego = function(){
         //Dibujar Escenario
-
         console.log("Iniciando juego!");
     };
     //************************************/
 
     //Intervalo de confianza******************
     let intervalo = setInterval(function(){
-
         if(ImageManager.getLoadingProgress() === 100){
             clearInterval(intervalo);
             iniciarJuego();//se inicia el juego una vez que las imagenes estan cargadas.
         }
-
     },1);
     //*****************************************/
 

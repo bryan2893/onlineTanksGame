@@ -42,6 +42,7 @@ class WallConstructor{
 
     getWalls(){
         let wallList = [];
+        let id = 0;
         for(let i = 0; i<this.escenary.length;i++){
             for(let j = 0; j<this.escenary[i].length;j++){
                 if(this.escenary[i][j] === 1){
@@ -50,8 +51,9 @@ class WallConstructor{
                     let x = j*16; //0
                     
                     let area = new Area(x,y,16,16);//se crea el area que cubre el muro.
-                    let wall = new Wall(area);
+                    let wall = new Wall(id,area);
                     wallList.push(wall);
+                    id++;
                 }
             }
         }

@@ -1,9 +1,20 @@
 class Wall{
-    constructor(id,area){
+    constructor(id,area,ctx,img){
         this.id = id;
         this.area = area;
+        this.ctx = ctx;
+        this.img = img;
     }
 
+    disAppear(){
+        this.ctx.clearRect(this.area.x, this.area.y, this.area.w,this.area.h);
+    }
+
+    display(){
+        this.ctx.drawImage(this.img, this.area.getX(), this.area.getY());
+    }
+
+    /*
     getJsonRepresentation(){
         return {
             id: this.id,
@@ -15,6 +26,5 @@ class Wall{
             }
         }
     }
+    */
 }
-
-module.exports = Wall;

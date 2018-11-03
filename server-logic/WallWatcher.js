@@ -23,7 +23,7 @@ class WallWatcher{
     }
 
     deleteWall(index){
-        this.walls.splice(index, 1);//elimina el tanke con el id coincidente.
+        this.walls.splice(index, 1);//elimina el muro con el id coincidente.
     }
 
     getListOfWallsInJsonFormat(){

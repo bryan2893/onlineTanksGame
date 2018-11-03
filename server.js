@@ -17,6 +17,8 @@ let wallConstructor = new WallConstructor();//se utiliza cada vez que se quiere 
 
 let wallWatcher = new WallWatcher(wallConstructor.getWalls());
 
+console.log(wallWatcher.getListOfWallsInJsonFormat());
+
 
 const httpServer = http.createServer(app);//Se crea el servidor http y se envia como paramtero el app de express.
 
@@ -95,7 +97,13 @@ io.on('connect',function(socketPlayer){
     socketPlayer.on('bullet-step',function(data){
         let bulletRunnig = bulletsManager.findBullet(data.bulletId);
         if(bulletRunnig){
+            //Verificar si las balas tocan algun objeto o se salen de las dimensiones del cuadro de juego.
             bulletRunnig.move(data.direccion);
+
+            console.log("Bala en eje x,y = "+bulletRunnig.area.getX()+","+bulletRunnig.area.getY());
+            if (bulletRunnig.area.getX() > 800){
+                console.log("El tanke esta fuera de limite derecho!");
+            }
         }
         
         //IMPORTANTE: aqui hay que verificar cada paso que dé la bala, para detectar cuando choque con algo.
@@ -106,5 +114,11 @@ io.on('connect',function(socketPlayer){
 });
 
 httpServer.listen(3000,function(){
+
+    let areaMuro = new Area(10,50,16,16);
+    let areaBala = new Area(10,44,8,8);
+
+    console.log(areaMuro.interseca(areaBala));
+
     console.log("Servidor de sockets escuchando en el puerto 3000!");
 });
