@@ -1,10 +1,11 @@
 class Bullet{
-    constructor(id,ctx,img,area,direction){
-        this.id = id; //el id es el id del interval que realiza la animación
+    constructor(idTanke,idInterval,ctx,img,area,direction){
+        this.idTanke = idTanke;
+        this.idInterval = idInterval;
         this.ctx = ctx;
         this.velocity = 3;
         this.img = img;
-        this.area = area;//objeto Area
+        this.area = area;
         this.direction = direction;
     }
 
@@ -16,8 +17,8 @@ class Bullet{
         this.ctx.drawImage(this.img, this.area.getX(), this.area.getY());
     }
 
-    setId(id){
-        this.id = id; 
+    setIdInterval(idInterval){
+        this.idInterval = idInterval;
     }
     
     move(direccion){

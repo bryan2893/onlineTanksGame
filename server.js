@@ -17,8 +17,6 @@ let wallConstructor = new WallConstructor();//se utiliza cada vez que se quiere 
 
 let wallWatcher = new WallWatcher(wallConstructor.getWalls());
 
-console.log(wallWatcher.getListOfWallsInJsonFormat());
-
 
 const httpServer = http.createServer(app);//Se crea el servidor http y se envia como paramtero el app de express.
 
@@ -85,7 +83,7 @@ io.on('connect',function(socketPlayer){
     socketPlayer.on('shoot',function(data){
 
         let area = new Area(data.x,data.y,data.w,data.h);
-        let bullet = new Bullet(data.bulletId,3,area,data.direction);
+        let bullet = new Bullet(data.idTanke,data.idInterval,3,area,data.direction);
 
         bulletsManager.setBullet(bullet); //se registra la bala en el BulletsManager del server.
 
@@ -95,30 +93,37 @@ io.on('connect',function(socketPlayer){
     });
 
     socketPlayer.on('bullet-step',function(data){
-        let bulletRunnig = bulletsManager.findBullet(data.bulletId);
+        let bulletRunnig = bulletsManager.findBullet(data.idInterval,data.idTanke);
         if(bulletRunnig){
             //Verificar si las balas tocan algun objeto o se salen de las dimensiones del cuadro de juego.
             bulletRunnig.move(data.direccion);
 
-            console.log("Bala en eje x,y = "+bulletRunnig.area.getX()+","+bulletRunnig.area.getY());
-            if (bulletRunnig.area.getX() > 800){
-                console.log("El tanke esta fuera de limite derecho!");
+            if (bulletsManager.exceedBorderTable(bulletRunnig)){
+                socketPlayer.broadcast.emit('bullet-exceed-border',{scope:'external',idTanke:bulletRunnig.idTanke,idInterval:bulletRunnig.idInterval});
+                socketPlayer.emit('bullet-exceed-border',{scope:'local',idTanke:bulletRunnig.idTanke,idInterval:bulletRunnig.idInterval});
+                return;
+            }
+
+
+            let posibleWall = wallWatcher.verifyIfAreaChokWithAnyWall(bulletRunnig.area);
+            if(posibleWall){
+                socketPlayer.broadcast.emit('bullet-chock-with-wall',{scope:'external',idTanke:bulletRunnig.idTanke,idInterval:bulletRunnig.idInterval,wall:posibleWall.getJsonRepresentation()});
+                socketPlayer.emit('bullet-chock-with-wall',{scope:'local',idTanke:bulletRunnig.idTanke,idInterval:bulletRunnig.idInterval,wall:posibleWall.getJsonRepresentation()});
+                return;
+            }
+
+            else if(false){
+
+            }else if(false){
+
+            }else{
+                //se le anuncia a los demas clientes que la bala se esta moviendo.
+                socketPlayer.broadcast.emit('another-client-bullet-is-moving',{idTanke:data.idTanke,idInterval:data.idInterval});
             }
         }
-        
-        //IMPORTANTE: aqui hay que verificar cada paso que dé la bala, para detectar cuando choque con algo.
-
-        //se le anuncia a los demas clientes que la bala se esta moviendo.
-        socketPlayer.broadcast.emit('another-client-bullet-is-moving',{bulletId:data.bulletId});
     });
 });
 
 httpServer.listen(3000,function(){
-
-    let areaMuro = new Area(10,50,16,16);
-    let areaBala = new Area(10,44,8,8);
-
-    console.log(areaMuro.interseca(areaBala));
-
     console.log("Servidor de sockets escuchando en el puerto 3000!");
 });

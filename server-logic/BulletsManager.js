@@ -3,10 +3,12 @@ class BulletsManager{
         this.bullets = [];
     }
 
-    findBullet(bulletId){
+    //idInterval,idTanke
+    findBullet(idInterval,idTanke){
         for(let i = 0; i<this.bullets.length; i++){
-            if(this.bullets[i].id === bulletId){
-                return this.bullets[i];
+            let bullet = this.bullets[i];
+            if(bullet.idInterval === idInterval && bullet.idTanke === idTanke){
+                return bullet;
             }
         }
         return null;
@@ -39,6 +41,33 @@ class BulletsManager{
             list.push(bulletInJsonFormat);
         }
         return list;
+    }
+
+    exceedBorderTable(bullet){
+        let respuesta = false;
+        switch(bullet.direction){
+            case 'arriba':
+                if(bullet.area.getY() <= 2){
+                    respuesta = true;
+                }
+                break;
+            case 'abajo':
+                if(bullet.area.getY() >= 560-8){
+                    respuesta = true;
+                }
+                break;
+            case 'izquierda':
+                if(bullet.area.getX() <= 2){
+                    respuesta = true;
+                }
+                break;
+            case 'derecha':
+                if(bullet.area.getX() >= 800-8){
+                    respuesta = true;
+                }
+                break;
+        }
+        return respuesta;
     }
 }
 

@@ -1,6 +1,7 @@
 class Bullet{
-    constructor(id,velocity,area,direction){  
-        this.id = id;
+    constructor(idTanke,idInterval,velocity,area,direction){
+        this.idTanke = idTanke;
+        this.idInterval = idInterval;
         this.velocity = velocity;
         this.area = area;//objeto Area
         this.direction = direction;
@@ -10,10 +11,13 @@ class Bullet{
         switch (direccion) {
             case 'arriba':
                 this.area.setY(this.area.getY() - this.velocity);
+                break;
             case 'abajo':
                 this.area.setY(this.area.getY() + this.velocity);
+                break;
             case 'izquierda':
                 this.area.setX(this.area.getX() - this.velocity);
+                break;
             case 'derecha':
                 this.area.setX(this.area.getX() + this.velocity);
                 break;
@@ -22,7 +26,8 @@ class Bullet{
 
     getJsonRepresentation(){
         return {
-            id : this.id,
+            idTanke : this.idTanke,
+            idInterval : this.idInterval,
             area : {
                 x : this.area.x,
                 y : this.area.y,

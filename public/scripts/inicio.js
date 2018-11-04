@@ -28,41 +28,49 @@ $(document).ready(function(){
         }
     };
 
-    let getBulletThatIsInTheOtherSide = function(bulletId){
+    let getBulletThatIsInTheOtherSide = function(idTanke,idInterval){
         for(let i = 0; i<inTheOtherSideBullets.length; i++){
-            if(inTheOtherSideBullets[i].id === bulletId){
-                return inTheOtherSideBullets[i];
+            let bullet = inTheOtherSideBullets[i];
+            if(bullet.idTanke === idTanke && bullet.idInterval === idInterval){
+                return bullet;
             }
         }
 
         return null;
     }
 
-    let deleteBulletThatIsInTheOtherSide = function(bulletId){
+    let deleteBulletThatIsInTheOtherSide = function(idTanke,idInterval){
         for(let i = 0; i<inTheOtherSideBullets.length; i++){
-            if(inTheOtherSideBullets[i].id === bulletId){
+            let bullet = inTheOtherSideBullets[i];
+            if(bullet.idTanke === idTanke && bullet.idInterval === idInterval){
                 inTheOtherSideBullets.splice(i, 1);
             }
         }
     }
 
-    let getLocalBulet = function(bulletId){
+    let getLocalBulet = function(idTanke,idInterval){
         for(let i = 0; i<localBulletsFlying.length; i++){
-            if(localBulletsFlying[i].id === bulletId){
-                return localBulletsFlying[i];
+            let bullet = localBulletsFlying[i];
+            if(bullet.idTanke === idTanke && bullet.idInterval === idInterval){
+                return bullet;
             }
         }
-
         return null;
     }
 
-    let deleteLocalBullet = function(bulletId){
+    let deleteLocalBullet = function(idTanke,idInterval){
         for(let i = 0; i<localBulletsFlying.length; i++){
-            if(localBulletsFlying[i].id === bulletId){
+            let bullet = localBulletsFlying[i];
+            if(bullet.idTanke === idTanke && bullet.idInterval === idInterval){
                 localBulletsFlying.splice(i, 1);
             }
         }
     }
+
+
+    let limpiarInterval = function(idInterval){
+        clearInterval(idInterval);
+    };
 
     let getBulletImageByDirection = function(direction){
         if(direction === 'arriba'){
@@ -233,7 +241,8 @@ $(document).ready(function(){
         /*****************************LOGICA PARA DISPARO DE LOS TANKES********************** */
         socket.on('other-player-shoot-by-first-time',function(data){
             /*
-                data.bulletId
+                data.idTanke
+                data.idInterval
                 data.x 
                 data.y
                 data.w 
@@ -244,7 +253,7 @@ $(document).ready(function(){
             let imageBullet = getBulletImageByDirection(data.direction);
             let area = new Area(data.x,data.y,data.w,data.h);
 
-            let bulletShootByOtherPlayer = new Bullet(data.bulletId,ctx,imageBullet,area,data.direction);
+            let bulletShootByOtherPlayer = new Bullet(data.idTanke,data.idInterval,ctx,imageBullet,area,data.direction);
 
             bulletShootByOtherPlayer.display();
 
@@ -253,12 +262,42 @@ $(document).ready(function(){
         });
 
         socket.on('another-client-bullet-is-moving',function(data){
-            let bulletOfOtherPlayerThatIsMoving = getBulletThatIsInTheOtherSide(data.bulletId);
+            let bulletOfOtherPlayerThatIsMoving = getBulletThatIsInTheOtherSide(data.idTanke,data.idInterval);
             if(bulletOfOtherPlayerThatIsMoving){
                 bulletOfOtherPlayerThatIsMoving.move(bulletOfOtherPlayerThatIsMoving.direction);
             }
         });
 
+        socket.on('bullet-exceed-border',function(data){
+            if (data.scope === 'local'){
+                deleteLocalBullet(data.idTanke,data.idInterval);
+                limpiarInterval(data.idInterval);
+                return;
+            }
+
+            if(data.scope === 'external'){
+                deleteBulletThatIsInTheOtherSide(data.idTanke,data.idInterval);
+                limpiarInterval(data.idInterval);
+                return;
+            }
+        });
+
+        //caundo una bala choca con un muro.
+        socket.on('bullet-chock-with-wall',function(data){
+            if (data.scope === 'local'){
+                deleteLocalBullet(data.idTanke,data.idInterval);
+                limpiarInterval(data.idInterval);
+                console.log("Se debe destruir el muro!!");
+                return;
+            }
+
+            if(data.scope === 'external'){
+                deleteBulletThatIsInTheOtherSide(data.idTanke,data.idInterval);
+                limpiarInterval(data.idInterval);
+                console.log("Se debe destruir el muro!!");
+                return;
+            }
+        });
 
         socket.on('movement-confirmation',function(data){
             if(data.mensaje === "si"){//si se puede mover
@@ -285,23 +324,33 @@ $(document).ready(function(){
                 break;
             case 32:
                 let shootInformation = tankeLocal.loadBulletShootingInformation();
-
                 let bulletImage =  getBulletImageByDirection(shootInformation.direction);
 
                 let area = new Area(shootInformation.x,shootInformation.y,shootInformation.w,shootInformation.h);
 
-                let bulletSooted = new Bullet(null,ctx,bulletImage,area,shootInformation.direction);
-
-                console.log("Informacion dada por el tanke local para el disparo "+JSON.stringify(shootInformation));
+                let bulletSooted = new Bullet(tankeLocal.id,null,ctx,bulletImage,area,shootInformation.direction);
 
                 let idInterval = setInterval(function(){
                     bulletSooted.move(bulletSooted.direction);
-                    socket.emit('bullet-step',shootInformation);
+                    let bulletInfo = {
+                        x:bulletSooted.area.getX(),
+                        y:bulletSooted.area.getY(),
+                        w:bulletSooted.area.w,
+                        h:bulletSooted.area.h,
+                        idTanke:bulletSooted.idTanke,
+                        idInterval:bulletSooted.idInterval,
+                        direccion:bulletSooted.direction
+                    }
+
+                    socket.emit('bullet-step',bulletInfo);
+
                 },10);
 
 
-                shootInformation.bulletId += idInterval; //se agreaga el id del intervalo shootInformation que va a ser pasado al servidor de sockets para que lo gaurde.
-                bulletSooted.setId(shootInformation.bulletId);
+
+                shootInformation.idInterval = idInterval;
+
+                bulletSooted.setIdInterval(shootInformation.idInterval);
 
                 localBulletsFlying.push(bulletSooted);
 
