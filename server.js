@@ -34,11 +34,14 @@ io.on('connect',function(socketPlayer){
 
     socketPlayer.emit('update-scenario-by-first-time',{lista_de_tankes: sessionsManager.getListOfTanksInJsonFormat(),lista_balas:bulletsManager.getListOfBulletsInJsonFormat(),walls:wallWatcher.getListOfWallsInJsonFormat()});
 
+    let randomBirthArea = wallConstructor.chooseRandomlyArea();
+
     //se crea un nuevo tanke en el servidor por cada conexion nueva...
-    let newTank = new Tank(socketPlayer.id,'player',new Area(0,0,32,32),5,'derecha');
+    let newTank = new Tank(socketPlayer.id,'player',randomBirthArea,5,'derecha');
 
     //Se pone el tanke online con el manejador de sesiones.
     sessionsManager.setTank(newTank);
+
     console.log("Tanke online! hay "+sessionsManager.getNumberOfTanksOnline()+" tankes online");
 
     //Se envia el tanke creado al cliente conectado.
@@ -58,8 +61,6 @@ io.on('connect',function(socketPlayer){
     socketPlayer.on('register-movement',function(data){
         //hacer algo con el movimiento registrado!
         let tankThatIsReporting = sessionsManager.findTank(data.idTanke);
-
-        //HACER ALGO PORQUE ESTAMOS FEOS
 
         if(tankThatIsReporting){
             let tankVelocity = tankThatIsReporting.tankVelocity;
@@ -98,30 +99,39 @@ io.on('connect',function(socketPlayer){
             //Verificar si las balas tocan algun objeto o se salen de las dimensiones del cuadro de juego.
             bulletRunnig.move(data.direccion);
 
-            if (bulletsManager.exceedBorderTable(bulletRunnig)){
-                socketPlayer.broadcast.emit('bullet-exceed-border',{scope:'external',idTanke:bulletRunnig.idTanke,idInterval:bulletRunnig.idInterval});
-                socketPlayer.emit('bullet-exceed-border',{scope:'local',idTanke:bulletRunnig.idTanke,idInterval:bulletRunnig.idInterval});
+            //PRIORIDAD 1
+            let posibleTank = sessionsManager.verifyIfChokWithAnyTank(bulletRunnig.area);
+            if(posibleTank){
+                bulletsManager.stopFlyingBullet(bulletRunnig.idTanke,bulletRunnig.idInterval);
+                socketPlayer.broadcast.emit('bullet-chock-with-tank',{scope:'external',idTanke:bulletRunnig.idTanke,idInterval:bulletRunnig.idInterval,tank:posibleTank.getJsonRepresentation()});
+                socketPlayer.emit('bullet-chock-with-tank',{scope:'local',idTanke:bulletRunnig.idTanke,idInterval:bulletRunnig.idInterval,tank:posibleTank.getJsonRepresentation()});
                 return;
             }
 
-
+            //PRIORIDAD 2
             let posibleWall = wallWatcher.verifyIfAreaChokWithAnyWall(bulletRunnig.area);
             if(posibleWall){
+                bulletsManager.stopFlyingBullet(bulletRunnig.idTanke,bulletRunnig.idInterval);
+                wallWatcher.deleteWall(posibleWall.id);
                 socketPlayer.broadcast.emit('bullet-chock-with-wall',{scope:'external',idTanke:bulletRunnig.idTanke,idInterval:bulletRunnig.idInterval,wall:posibleWall.getJsonRepresentation()});
                 socketPlayer.emit('bullet-chock-with-wall',{scope:'local',idTanke:bulletRunnig.idTanke,idInterval:bulletRunnig.idInterval,wall:posibleWall.getJsonRepresentation()});
                 return;
             }
 
-            else if(false){
-
-            }else if(false){
-
-            }else{
-                //se le anuncia a los demas clientes que la bala se esta moviendo.
-                socketPlayer.broadcast.emit('another-client-bullet-is-moving',{idTanke:data.idTanke,idInterval:data.idInterval});
+            //PRIORIDAD 3
+            if (bulletsManager.exceedBorderTable(bulletRunnig)){
+                bulletsManager.stopFlyingBullet(bulletRunnig.idTanke,bulletRunnig.idInterval);
+                socketPlayer.broadcast.emit('bullet-exceed-border',{scope:'external',idTanke:bulletRunnig.idTanke,idInterval:bulletRunnig.idInterval});
+                socketPlayer.emit('bullet-exceed-border',{scope:'local',idTanke:bulletRunnig.idTanke,idInterval:bulletRunnig.idInterval});
+                return;
             }
+
+            //se le anuncia a los demas clientes que la bala se esta moviendo.
+            socketPlayer.broadcast.emit('another-client-bullet-is-moving',{idTanke:data.idTanke,idInterval:data.idInterval});
+            
         }
     });
+
 });
 
 httpServer.listen(3000,function(){

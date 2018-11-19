@@ -43,6 +43,7 @@ $(document).ready(function(){
         for(let i = 0; i<inTheOtherSideBullets.length; i++){
             let bullet = inTheOtherSideBullets[i];
             if(bullet.idTanke === idTanke && bullet.idInterval === idInterval){
+                bullet.disAppear();
                 inTheOtherSideBullets.splice(i, 1);
             }
         }
@@ -62,6 +63,7 @@ $(document).ready(function(){
         for(let i = 0; i<localBulletsFlying.length; i++){
             let bullet = localBulletsFlying[i];
             if(bullet.idTanke === idTanke && bullet.idInterval === idInterval){
+                bullet.disAppear();
                 localBulletsFlying.splice(i, 1);
             }
         }
@@ -94,6 +96,7 @@ $(document).ready(function(){
             if(wall.id === wallId){
                 wall.disAppear();
                 localWalls.splice(i, 1);
+                console.log("Encontro el muro y lo va a elminar en el ciclo for");
             }
         }
     }
@@ -282,21 +285,42 @@ $(document).ready(function(){
             }
         });
 
-        //caundo una bala choca con un muro.
+        //cuando una bala choca con un muro.
         socket.on('bullet-chock-with-wall',function(data){
+            
+            if (data.scope === 'local'){
+                
+                deleteLocalBullet(data.idTanke,data.idInterval);
+                limpiarInterval(data.idInterval);
+                deleteWall(data.wall.id);//borra de la lista local y despinta el muro.
+                return;
+            }
+
+            if(data.scope === 'external'){
+                //deleteWall(wall.id);//borra de la lista y despinta el muro.
+                deleteBulletThatIsInTheOtherSide(data.idTanke,data.idInterval);
+                limpiarInterval(data.idInterval);
+                deleteWall(data.wall.id);//borra de la lista local y despinta el muro.
+                return;
+            }
+
+        });
+
+        socket.on('bullet-chock-with-tank',function(data){
             if (data.scope === 'local'){
                 deleteLocalBullet(data.idTanke,data.idInterval);
                 limpiarInterval(data.idInterval);
-                console.log("Se debe destruir el muro!!");
+                console.log("tanke destruido!!");
                 return;
             }
 
             if(data.scope === 'external'){
                 deleteBulletThatIsInTheOtherSide(data.idTanke,data.idInterval);
                 limpiarInterval(data.idInterval);
-                console.log("Se debe destruir el muro!!");
+                console.log("tanke destruido!!");
                 return;
             }
+
         });
 
         socket.on('movement-confirmation',function(data){

@@ -3,6 +3,26 @@ let Area = require('./Area');
 
 class WallConstructor{
     constructor(){
+        this.birthPoints = [
+            new Area(0,0,32,32),
+            new Area(0,32,32,32),
+            new Area(0,64,32,32),
+            new Area(0,96,32,32),
+            new Area(0,128,32,32),
+            new Area(0,160,32,32),
+            new Area(0,192,32,32),
+            new Area(0,224,32,32),
+
+            new Area(0,256,32,32),
+            new Area(0,288,32,32),
+            new Area(0,320,32,32),
+            new Area(0,352,32,32),
+            new Area(0,384,32,32),
+            new Area(0,416,32,32),
+            new Area(0,448,32,32),
+            new Area(0,480,32,32),
+        ];
+
         this.escenary = [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
                         [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
                         [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
@@ -59,6 +79,12 @@ class WallConstructor{
         }
 
         return wallList;
+    }
+
+    //retorna objeto Area.
+    chooseRandomlyArea(){
+        let randomPosition = Math.floor(Math.random() * this.birthPoints.length);
+        return this.birthPoints[randomPosition];
     }
 }
 

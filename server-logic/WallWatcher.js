@@ -6,6 +6,16 @@ class WallWatcher{
         this.walls = listOfWalls;
     }
 
+    findWall(id){
+        for(let i = 0; i<this.walls.length; i++){
+            let wall = this.walls[i];
+            if(wall.id === id){
+                return i;
+            }
+        }
+        return -1;
+    }
+
     getWalls(){
         return this.walls;
     }
@@ -22,8 +32,11 @@ class WallWatcher{
         this.walls.push(wall);
     }
 
-    deleteWall(index){
-        this.walls.splice(index, 1);//elimina el muro con el id coincidente.
+    deleteWall(walId){
+        let index = this.findWall(walId);
+        if(index !== -1){
+            this.walls.splice(index, 1);//elimina el muro con el id coincidente.
+        }
     }
 
     getListOfWallsInJsonFormat(){

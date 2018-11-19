@@ -26,10 +26,11 @@ class BulletsManager{
         this.bullets.push(bullet);
     }
 
-    stopFlyingBullet(id){
+    stopFlyingBullet(idTanke,idInterval){
         for(let i = 0; i<this.bullets.length; i++){
-            if(this.bullets[i].id === id){
-                this.bullets.splice(i, 1);//elimina el tanke con el id coincidente.
+            let bullet = this.bullets[i];
+            if(bullet.idTanke === idTanke && bullet.idInterval === idInterval){
+                this.bullets.splice(i, 1);//elimina el tanke con las credenciales coincidentes.
             }
         }
     }

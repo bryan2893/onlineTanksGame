@@ -41,6 +41,16 @@ class SessionsManager{
         }
         return list;
     }
+
+    verifyIfChokWithAnyTank(area){
+        for(let i = 0; i<this.tanksOnline.length; i++){
+            let tank = this.tanksOnline[i];
+            if(area.interseca(tank.area)){
+                return tank;
+            }
+        }
+        return null;
+    }
 }
 
 module.exports = SessionsManager;
