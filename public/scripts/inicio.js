@@ -69,6 +69,17 @@ $(document).ready(function(){
         }
     }
 
+    let matarPaloma = function(){
+        let paloma = localWalls[0];
+        paloma.display('muerta');
+    };
+
+    let gameOver = function(socket,ctx){
+        socket.disconnect();
+        ctx.clearRect(0,0,800,560);
+        ctx.drawImage(ImageManager.getImage('game_over'), 280, 200);
+    };
+
 
     let limpiarInterval = function(idInterval){
         clearInterval(idInterval);
@@ -96,7 +107,6 @@ $(document).ready(function(){
             if(wall.id === wallId){
                 wall.disAppear();
                 localWalls.splice(i, 1);
-                console.log("Encontro el muro y lo va a elminar en el ciclo for");
             }
         }
     }
@@ -114,10 +124,19 @@ $(document).ready(function(){
                     h : this.area.h
                 }
         }
-        
         */
+        let imgPalomaViva = ImageManager.getImage('base');
+        let imgPalomaMuerta = ImageManager.getImage('base_destroyed');
+        let birdInJson = listOfWalls[0];
+
+        let area = new Area(birdInJson.area.x,birdInJson.area.y,birdInJson.area.w,birdInJson.area.h);
+
+        let bird = new Bird(-2,area,ctx,imgPalomaViva,imgPalomaMuerta);
+
+        localWalls.push(bird);
+
         let wallImage = ImageManager.getImage('wall_brick');
-        for (let index = 0; index < listOfWalls.length; index++) {
+        for (let index = 1; index < listOfWalls.length; index++) {
             let wallInJson = listOfWalls[index];
 
             let area = new Area(wallInJson.area.x,wallInJson.area.y,wallInJson.area.w,wallInJson.area.h);
@@ -129,6 +148,8 @@ $(document).ready(function(){
             wall.display();
 
         }
+
+        bird.display('viva');
 
     };
 
@@ -317,10 +338,27 @@ $(document).ready(function(){
             if(data.scope === 'external'){
                 deleteBulletThatIsInTheOtherSide(data.idTanke,data.idInterval);
                 limpiarInterval(data.idInterval);
-                console.log("tanke destruido!!");
                 return;
             }
 
+        });
+
+        socket.on('bullet-chock-with-bird',function(data){
+            if (data.scope === 'local'){
+                deleteLocalBullet(data.idTanke,data.idInterval);
+                limpiarInterval(data.idInterval);
+                matarPaloma();
+                gameOver(socket,ctx);
+                return;
+            }
+
+            if(data.scope === 'external'){
+                deleteBulletThatIsInTheOtherSide(data.idTanke,data.idInterval);
+                limpiarInterval(data.idInterval);
+                matarPaloma();
+                gameOver(socket,ctx);
+                return;
+            }
         });
 
         socket.on('movement-confirmation',function(data){
@@ -328,7 +366,6 @@ $(document).ready(function(){
                 tankeLocal.move(data.direccion);
             }
         });
-
     });
 
     //*******Movimiento de tanke y disparo con teclas direccionales y tecla espacio**

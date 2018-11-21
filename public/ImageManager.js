@@ -10,7 +10,8 @@ let ImageManager = (function() {
       bullet_left:null,
       bullet_down:null,
       bullet_up:null,
-      wall_brick: null
+      wall_brick: null,
+      game_over: null
   };
   
   let imagesCount = Object.keys(images).length;

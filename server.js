@@ -26,7 +26,7 @@ app.get('/cliente',function(req,res){
     res.sendFile(path.join(path.join(__dirname+'/cliente-prueba.html')));
 });
 
-const io = require('socket.io')(httpServer,{pingInterval: 1000,pingTimeout: 1500});
+const io = require('socket.io')(httpServer,{pingInterval: 1000, pingTimeout: 1500});
 
 io.on('connect',function(socketPlayer){
 
@@ -55,7 +55,6 @@ io.on('connect',function(socketPlayer){
         socketPlayer.broadcast.emit('tank-off-line',{idTanke:socketPlayer.id});
         console.log("Tanke desconectado correctamente ahora hay "+sessionsManager.getTanksOnline().length+" tankes online");
     });
-
 
     //registra el movimiento del tanke por parte del cliente.
     socketPlayer.on('register-movement',function(data){
@@ -108,6 +107,13 @@ io.on('connect',function(socketPlayer){
                 return;
             }
 
+            let paloma = wallWatcher.verifyIfShootIsToBird(bulletRunnig.area);
+            if (paloma){
+                bulletsManager.stopFlyingBullet(bulletRunnig.idTanke,bulletRunnig.idInterval);
+                socketPlayer.broadcast.emit('bullet-chock-with-bird',{scope:'external',idTanke:bulletRunnig.idTanke,idInterval:bulletRunnig.idInterval,bird:paloma.getJsonRepresentation()});
+                socketPlayer.emit('bullet-chock-with-bird',{scope:'local',idTanke:bulletRunnig.idTanke,idInterval:bulletRunnig.idInterval,bird:paloma.getJsonRepresentation()});
+            }
+
             //PRIORIDAD 2
             let posibleWall = wallWatcher.verifyIfAreaChokWithAnyWall(bulletRunnig.area);
             if(posibleWall){
@@ -128,7 +134,7 @@ io.on('connect',function(socketPlayer){
 
             //se le anuncia a los demas clientes que la bala se esta moviendo.
             socketPlayer.broadcast.emit('another-client-bullet-is-moving',{idTanke:data.idTanke,idInterval:data.idInterval});
-            
+
         }
     });
 

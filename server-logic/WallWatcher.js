@@ -58,6 +58,14 @@ class WallWatcher{
         return null;
     }
 
+    verifyIfShootIsToBird(area){
+        let bird = this.walls[0];
+        if(area.interseca(bird.area)){
+            return bird;
+        }
+        return null;
+    }
+
     replicateFutureTankAreaForProve(tank,direccion){
         let area = null;
         switch (direccion) {
