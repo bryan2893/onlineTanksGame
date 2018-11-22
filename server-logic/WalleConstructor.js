@@ -97,6 +97,15 @@ class WallConstructor{
         let randomPosition = Math.floor(Math.random() * this.birthPoints.length);
         return this.birthPoints[randomPosition];
     }
+
+    getListOfRandomBirthPointsInMap(){
+        let points = [];
+        for (let index = 0; index < this.birthPoints.length; index++) {
+            const element = this.birthPoints[index];
+            points.push(element.getJsonRepresentation());
+        }
+        return points;
+    }
 }
 
 module.exports = WallConstructor;

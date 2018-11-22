@@ -32,28 +32,28 @@ io.on('connect',function(socketPlayer){
 
     //*******************************Logica para manejo de sesiones de jugadores(tankes)******************
 
-    socketPlayer.emit('update-scenario-by-first-time',{lista_de_tankes: sessionsManager.getListOfTanksInJsonFormat(),lista_balas:bulletsManager.getListOfBulletsInJsonFormat(),walls:wallWatcher.getListOfWallsInJsonFormat()});
+    socketPlayer.emit('update-scenario-by-first-time',{lista_de_tankes: sessionsManager.getListOfTanksInJsonFormat(),lista_balas:bulletsManager.getListOfBulletsInJsonFormat(),walls:wallWatcher.getListOfWallsInJsonFormat(),birthPoints:wallConstructor.getListOfRandomBirthPointsInMap()});
 
     let randomBirthArea = wallConstructor.chooseRandomlyArea();
 
+    let numeroJugador = sessionsManager.getPlayerNumer();
+
     //se crea un nuevo tanke en el servidor por cada conexion nueva...
     let newTank = new Tank(socketPlayer.id,'player',randomBirthArea,5,'derecha');
+    newTank.setPlayerNumber(numeroJugador);
 
     //Se pone el tanke online con el manejador de sesiones.
     sessionsManager.setTank(newTank);
 
-    console.log("Tanke online! hay "+sessionsManager.getNumberOfTanksOnline()+" tankes online");
-
-    //Se envia el tanke creado al cliente conectado.
-    socketPlayer.emit('create-local-tank',newTank.getJsonRepresentation());
+    socketPlayer.emit('create-local-tank',{tank:newTank.getJsonRepresentation(),playerNumber:numeroJugador});
+    console.log("Numero de jugador enviado = "+ numeroJugador);
 
     //Se le avisa a los demas jugadores de la creacion de un tanke.
-    socketPlayer.broadcast.emit('new-tank-online', newTank.getJsonRepresentation());
+    socketPlayer.broadcast.emit('new-tank-online', {tank:newTank.getJsonRepresentation(),playerNumber:numeroJugador});
 
     socketPlayer.on('disconnect',function(){
         sessionsManager.disconnectTank(socketPlayer.id);
         socketPlayer.broadcast.emit('tank-off-line',{idTanke:socketPlayer.id});
-        console.log("Tanke desconectado correctamente ahora hay "+sessionsManager.getTanksOnline().length+" tankes online");
     });
 
     //registra el movimiento del tanke por parte del cliente.
@@ -97,14 +97,15 @@ io.on('connect',function(socketPlayer){
         if(bulletRunnig){
             //Verificar si las balas tocan algun objeto o se salen de las dimensiones del cuadro de juego.
             bulletRunnig.move(data.direccion);
-
             //PRIORIDAD 1
-            let posibleTank = sessionsManager.verifyIfChokWithAnyTank(bulletRunnig.area);
+            let posibleTank = sessionsManager.verifyIfChokWithAnyTank(bulletRunnig.area,bulletRunnig.idTanke);            
             if(posibleTank){
+                posibleTank.substractLive();//se le resta una vida al tanke.
+                sessionsManager.disconnectTank(posibleTank.id);//saquelo de la lista del session manager.
+
                 bulletsManager.stopFlyingBullet(bulletRunnig.idTanke,bulletRunnig.idInterval);
                 socketPlayer.broadcast.emit('bullet-chock-with-tank',{scope:'external',idTanke:bulletRunnig.idTanke,idInterval:bulletRunnig.idInterval,tank:posibleTank.getJsonRepresentation()});
                 socketPlayer.emit('bullet-chock-with-tank',{scope:'local',idTanke:bulletRunnig.idTanke,idInterval:bulletRunnig.idInterval,tank:posibleTank.getJsonRepresentation()});
-                return;
             }
 
             let paloma = wallWatcher.verifyIfShootIsToBird(bulletRunnig.area);
@@ -136,6 +137,14 @@ io.on('connect',function(socketPlayer){
             socketPlayer.broadcast.emit('another-client-bullet-is-moving',{idTanke:data.idTanke,idInterval:data.idInterval});
 
         }
+    });
+
+    socketPlayer.on('player-comes-to-live',function(data){
+        let jsonTank = data.tank;
+        console.log("El jugador que volvio a la vida le quedan "+jsonTank.lives+" vidas");
+        let tankSurvivor = sessionsManager.createTankInstance(jsonTank);
+        sessionsManager.setTank(tankSurvivor);
+        socketPlayer.broadcast.emit('tank-fighting-again',{tank:jsonTank});
     });
 
 });

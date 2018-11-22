@@ -10,6 +10,13 @@ $(document).ready(function(){
 
     let localWalls = [];
 
+    let birthPoints = [];
+
+    let getBirthPointRandomly = function(){
+        let randomPosition = Math.floor(Math.random() * birthPoints.length);
+        return birthPoints[randomPosition];
+    };
+
     let getTankThatIsInTheOtherSide = function(tankId){
         for(let i = 0; i<inTheOtherSideTanks.length; i++){
             if(inTheOtherSideTanks[i].id === tankId){
@@ -153,6 +160,112 @@ $(document).ready(function(){
 
     };
 
+    /*EN CASO DE QUE EL JUGADOR MUERA ESTA ES LA LÓGICA....*/
+    let restablecerFuncionalidad = function(){
+        document.onkeydown = function(e) {
+            switch (e.keyCode) {
+                case 37:
+                    socket.emit('register-movement',{idTanke:tankeLocal.id,direccion:'izquierda'});
+                    break;
+                case 38:
+                    socket.emit('register-movement',{idTanke:tankeLocal.id,direccion:'arriba'});
+                    break;
+                case 39:
+                    socket.emit('register-movement',{idTanke:tankeLocal.id,direccion:'derecha'});
+                    break;
+                case 40:
+                    socket.emit('register-movement',{idTanke:tankeLocal.id,direccion:'abajo'});
+                    break;
+                case 32:
+                    let shootInformation = tankeLocal.loadBulletShootingInformation();
+                    let bulletImage =  getBulletImageByDirection(shootInformation.direction);
+    
+                    let area = new Area(shootInformation.x,shootInformation.y,shootInformation.w,shootInformation.h);
+    
+                    let bulletSooted = new Bullet(tankeLocal.id,null,ctx,bulletImage,area,shootInformation.direction);
+    
+                    let idInterval = setInterval(function(){
+                        bulletSooted.move(bulletSooted.direction);
+                        let bulletInfo = {
+                            x:bulletSooted.area.getX(),
+                            y:bulletSooted.area.getY(),
+                            w:bulletSooted.area.w,
+                            h:bulletSooted.area.h,
+                            idTanke:bulletSooted.idTanke,
+                            idInterval:bulletSooted.idInterval,
+                            direccion:bulletSooted.direction
+                        }
+    
+                        socket.emit('bullet-step',bulletInfo);
+    
+                    },10);
+    
+    
+    
+                    shootInformation.idInterval = idInterval;
+    
+                    bulletSooted.setIdInterval(shootInformation.idInterval);
+    
+                    localBulletsFlying.push(bulletSooted);
+    
+                    socket.emit('shoot',shootInformation);
+    
+                    break;
+            }
+        };
+    }
+
+    
+    let stopPlayerGameBy4Seconds = function(socket,tanke){
+
+        /*
+            tanke...
+
+            name : this.name,
+            id : this.id,
+            lives : this.lives,
+            area : {
+                x : this.area.x,
+                y : this.area.y,
+                w : this.area.w,
+                h : this.area.h
+            },
+            velocity : this.velocity,
+            actualDirection: this.actualDirection
+            
+            */
+
+        document.onkeydown = function(){};
+        setTimeout(() => {
+            //getJsonRepresentation
+            let newBirthPoint = getBirthPointRandomly();//punto donde renacerá el tanke.
+            tanke.area = newBirthPoint;
+            let area = new Area(newBirthPoint.x,newBirthPoint.y,newBirthPoint.w,newBirthPoint.h);
+            tankeLocal.setArea(area);
+            tankeLocal.setActualDirection('derecha');
+            tankeLocal.display('derecha');
+            socket.emit('player-comes-to-live',{tank:tanke});//avisa al sessionManager del servidor que el jugador esta de vuelta.
+            restablecerFuncionalidad();//vuelve a dar el control al usuario.
+        }, 4000);
+    }
+
+    let chooseImagesForLocaltank = function(playerNumber){
+        if(playerNumber === 1){
+            return ['tanke_player_1_izquierda','tanke_player_1_derecha','tanke_player_1_arriba','tanke_player_1_abajo'];
+        }else if(playerNumber === 2){
+            return ['tank_armor_left_c1_t2','tank_armor_right_c1_t2','tank_armor_up_c1_t2','tank_armor_down_c1_t2'];
+        }else if(playerNumber === 3){
+            return ['tank_fast_left_c0_t2','tank_fast_right_c0_t2','tank_fast_up_c0_t2','tank_fast_down_c0_t2'];
+        }else if(playerNumber === 4){
+            return ['tank_power_left_c0_t2_f','tank_power_right_c0_t2_f','tank_power_up_c0_t2_f','tank_power_down_c0_t2_f'];
+        }else if(playerNumber === 5){
+            return ['tank_power_left_c0_t2','tank_power_right_c0_t2','tank_power_up_c0_t2','tank_power_down_c0_t2'];
+        }
+        else{
+            return null;
+        }
+    }
+
     let canvas = document.getElementById("gameField");
     canvas.width = 800;
     canvas.height = 560;
@@ -169,22 +282,25 @@ $(document).ready(function(){
             listaTankes = data.lista_de_tankes;
             lista_balas = data.lista_balas;
             lista_muros = data.walls;
+            birthPoints = data.birthPoints;
 
             //Pinta los muros del juego y los registra en la lista de muros locales******
             escenaryWallsConstructor(lista_muros,ctx);
             
             //agrega los tankes en el juego al momento de la conexion al servidor.
             for(let i = 0; i<listaTankes.length;i++){
-                let data = listaTankes[i];
+                let tank = listaTankes[i];
 
-                let area = new Area(data.area.x,data.area.y,data.area.w,data.area.h);
+                let area = new Area(tank.area.x,tank.area.y,tank.area.w,tank.area.h);
 
-                let l = ImageManager.getImage('tanke_player_1_izquierda');
-                let r = ImageManager.getImage('tanke_player_1_derecha');
-                let u = ImageManager.getImage('tanke_player_1_arriba');
-                let b = ImageManager.getImage('tanke_player_1_abajo');
+                let setOfImagesForThisLocalPlayer = chooseImagesForLocaltank(tank.playerNumber);
 
-                let tankThatIsOnline = new Tank(data.id,area,ctx,l,r,b,u,data.velocity,data.actualDirection);
+                let l = ImageManager.getImage(setOfImagesForThisLocalPlayer[0]);
+                let r = ImageManager.getImage(setOfImagesForThisLocalPlayer[1]);
+                let u = ImageManager.getImage(setOfImagesForThisLocalPlayer[2]);
+                let b = ImageManager.getImage(setOfImagesForThisLocalPlayer[3]);
+
+                let tankThatIsOnline = new Tank(tank.id,area,ctx,l,r,b,u,tank.velocity,tank.actualDirection);
 
 
                 tankThatIsOnline.display(tankThatIsOnline.actualDirection);
@@ -215,29 +331,39 @@ $(document).ready(function(){
         });
 
         socket.on('create-local-tank',function(data){
-            let area = new Area(data.area.x,data.area.y,data.area.w,data.area.h);
+            let tank = data.tank;
 
-            let l = ImageManager.getImage('tanke_player_1_izquierda');
-            let r = ImageManager.getImage('tanke_player_1_derecha');
-            let u = ImageManager.getImage('tanke_player_1_arriba');
-            let b = ImageManager.getImage('tanke_player_1_abajo');
+            let area = new Area(tank.area.x,tank.area.y,tank.area.w,tank.area.h);
 
-            let tanke = new Tank(data.id,area,ctx,l,r,b,u,data.velocity,data.actualDirection);
+            let setOfImagesForThisLocalPlayer = chooseImagesForLocaltank(data.playerNumber);
+
+            let l = ImageManager.getImage(setOfImagesForThisLocalPlayer[0]);
+            let r = ImageManager.getImage(setOfImagesForThisLocalPlayer[1]);
+            let u = ImageManager.getImage(setOfImagesForThisLocalPlayer[2]);
+            let b = ImageManager.getImage(setOfImagesForThisLocalPlayer[3]);
+
+            let tanke = new Tank(tank.id,area,ctx,l,r,b,u,tank.velocity,tank.actualDirection);
             tankeLocal = tanke;
+
+            console.log("Id de tankeLocal = "+tankeLocal.id);
 
             tanke.display('derecha');
         });
 
         //el servidor avisa que un tanke que no es el local ha sido creado.
         socket.on('new-tank-online',function(data){
-            let area = new Area(data.area.x,data.area.y,data.area.w,data.area.h);
+            let tank = data.tank;
 
-            let l = ImageManager.getImage('tanke_player_1_izquierda');
-            let r = ImageManager.getImage('tanke_player_1_derecha');
-            let u = ImageManager.getImage('tanke_player_1_arriba');
-            let b = ImageManager.getImage('tanke_player_1_abajo');
+            let area = new Area(tank.area.x,tank.area.y,tank.area.w,tank.area.h);
 
-            let newOnlineTank = new Tank(data.id,area,ctx,l,r,b,u,data.velocity,data.actualDirection);
+            let setOfImagesForThisLocalPlayer = chooseImagesForLocaltank(data.playerNumber);
+
+            let l = ImageManager.getImage(setOfImagesForThisLocalPlayer[0]);
+            let r = ImageManager.getImage(setOfImagesForThisLocalPlayer[1]);
+            let u = ImageManager.getImage(setOfImagesForThisLocalPlayer[2]);
+            let b = ImageManager.getImage(setOfImagesForThisLocalPlayer[3]);
+
+            let newOnlineTank = new Tank(tank.id,area,ctx,l,r,b,u,tank.velocity,tank.actualDirection);
 
             newOnlineTank.display('derecha');
 
@@ -308,15 +434,12 @@ $(document).ready(function(){
 
         //cuando una bala choca con un muro.
         socket.on('bullet-chock-with-wall',function(data){
-            
             if (data.scope === 'local'){
-                
                 deleteLocalBullet(data.idTanke,data.idInterval);
                 limpiarInterval(data.idInterval);
                 deleteWall(data.wall.id);//borra de la lista local y despinta el muro.
                 return;
             }
-
             if(data.scope === 'external'){
                 //deleteWall(wall.id);//borra de la lista y despinta el muro.
                 deleteBulletThatIsInTheOtherSide(data.idTanke,data.idInterval);
@@ -324,23 +447,66 @@ $(document).ready(function(){
                 deleteWall(data.wall.id);//borra de la lista local y despinta el muro.
                 return;
             }
-
         });
 
         socket.on('bullet-chock-with-tank',function(data){
+
+            /*
+            data.tank
+
+            name : this.name,
+            id : this.id,
+            lives : this.lives,
+            area : {
+                x : this.area.x,
+                y : this.area.y,
+                w : this.area.w,
+                h : this.area.h
+            },
+            velocity : this.velocity,
+            actualDirection: this.actualDirection
+            
+            */
+
             if (data.scope === 'local'){
                 deleteLocalBullet(data.idTanke,data.idInterval);
                 limpiarInterval(data.idInterval);
-                console.log("tanke destruido!!");
+
+                let tankePegado = data.tank;//representacion del objeto tanke en formato JSON.
+                //Buscar y desparecer la representacion del tanke que se encuentra del otro lado del mundo.
+                let tankeEnElOtroLado = getTankThatIsInTheOtherSide(tankePegado.id);
+                if(tankeEnElOtroLado){
+                    tankeEnElOtroLado.disAppear();
+                }
+
                 return;
             }
 
             if(data.scope === 'external'){
                 deleteBulletThatIsInTheOtherSide(data.idTanke,data.idInterval);
                 limpiarInterval(data.idInterval);
+                let tankePegado = data.tank;//representacion del objeto tanke en formato JSON.
+                if(tankePegado.id === tankeLocal.id){
+                    tankeLocal.disAppear();//despinta el tanke.
+                    stopPlayerGameBy4Seconds(socket,tankePegado);
+                }else{
+                    let tankeEnElOtroLado = getTankThatIsInTheOtherSide(tankePegado.id);
+                    tankeEnElOtroLado.disAppear();
+                }
                 return;
             }
 
+        });
+
+        //Indica que otro jugador ha renacido y que esta listo para luchar.
+        socket.on('tank-fighting-again',function(data){
+            let newTankPosition = data.tank.area;
+            let tank = getTankThatIsInTheOtherSide(data.tank.id);
+            if(tank){
+                let area = new Area(newTankPosition.x,newTankPosition.y,newTankPosition.w,newTankPosition.h);
+                tank.setArea(area);
+                tank.display('derecha');
+            }
         });
 
         socket.on('bullet-chock-with-bird',function(data){
@@ -367,6 +533,7 @@ $(document).ready(function(){
             }
         });
     });
+
 
     //*******Movimiento de tanke y disparo con teclas direccionales y tecla espacio**
     document.onkeydown = function(e) {

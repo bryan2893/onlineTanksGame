@@ -6,6 +6,11 @@ class Tank{
         this.area = area;
         this.velocity = velocity;
         this.actualDirection = direction;
+        this.playerNUmber = 0;
+    }
+
+    setPlayerNumber(number){
+        this.playerNUmber = number;
     }
 
     setActualDirection(direccion){
@@ -46,8 +51,22 @@ class Tank{
                 h : this.area.h
             },
             velocity : this.velocity,
-            actualDirection: this.actualDirection
+            actualDirection: this.actualDirection,
+            playerNumber: this.playerNUmber
         }
+    }
+
+    substractLive(){
+        if(this.lives > 1){
+            this.lives--;
+        }else{
+            this.lives = 0;
+            return 0;//cuando retorne esto es porque ya no quedan vidas!!.
+        }
+    }
+
+    setArea(area){
+        this.area = area;
     }
 }
 

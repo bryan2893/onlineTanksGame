@@ -22,4 +22,8 @@ class TankesController{
             tanke.area.setX(position.x);
         }
     }
+
+    createTankInstanceWith(tankInJson){
+
+    }
 }

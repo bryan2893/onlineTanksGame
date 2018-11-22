@@ -1,3 +1,6 @@
+let Tank = require('./Tank');
+let Area = require('./Area');
+
 class SessionsManager{
 
     constructor(){
@@ -42,14 +45,40 @@ class SessionsManager{
         return list;
     }
 
-    verifyIfChokWithAnyTank(area){
+    verifyIfChokWithAnyTank(area,idTankeAexcluir){
         for(let i = 0; i<this.tanksOnline.length; i++){
             let tank = this.tanksOnline[i];
-            if(area.interseca(tank.area)){
+            if(area.interseca(tank.area) && tank.id !== idTankeAexcluir){
                 return tank;
             }
         }
         return null;
+    }
+
+    createTankInstance(jsonTank){
+        /*
+        constructor(id,name,area,velocity,direction)
+
+        name : this.name,
+        id : this.id,
+        lives : this.lives,
+        area : {
+            x : this.area.x,
+            y : this.area.y,
+            w : this.area.w,
+            h : this.area.h
+        },
+        velocity : this.velocity,
+        actualDirection: this.actualDirection
+
+        */
+        let areaJson = jsonTank.area;
+        let area = new Area(areaJson.x,areaJson.y,areaJson.w,areaJson.h);
+        return new Tank(jsonTank.id,jsonTank.name,area,jsonTank.velocity,'derecha');
+    }
+
+    getPlayerNumer(){
+        return this.getNumberOfTanksOnline() + 1;
     }
 }
 

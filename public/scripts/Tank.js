@@ -15,6 +15,10 @@ class Tank{
         this.actualDirection = direction;
     }
 
+    setArea(area){
+        this.area = area;
+    }
+
     move(direction){
         let x = this.area.getX();
         let y = this.area.getY();

@@ -52,6 +52,10 @@ class Area{
         this.getTop() > other.getBottom() ||
         this.getBottom() < other.getTop());
     }
+
+    getJsonRepresentation(){
+        return {x:this.x,y:this.y,w:this.w,h:this.h};
+    }
 }
 
 module.exports = Area;

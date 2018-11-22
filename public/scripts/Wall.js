@@ -7,7 +7,6 @@ class Wall{
     }
 
     disAppear(){
-        console.log("ejecucion metodo limpiar");
         this.ctx.clearRect(this.area.x, this.area.y, this.area.w,this.area.h);
     }
 
