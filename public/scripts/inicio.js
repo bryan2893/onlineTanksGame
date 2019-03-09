@@ -274,7 +274,7 @@ $(document).ready(function(){
     //*******************Logica de sockets.
 
     let options = {};
-    let socket = io('http://localhost:3000/',options);
+    let socket = io('/',options);
 
     socket.on('connect',function(){
 
