@@ -46,7 +46,6 @@ io.on('connect',function(socketPlayer){
     sessionsManager.setTank(newTank);
 
     socketPlayer.emit('create-local-tank',{tank:newTank.getJsonRepresentation(),playerNumber:numeroJugador});
-    console.log("Numero de jugador enviado = "+ numeroJugador);
 
     //Se le avisa a los demas jugadores de la creacion de un tanke.
     socketPlayer.broadcast.emit('new-tank-online', {tank:newTank.getJsonRepresentation(),playerNumber:numeroJugador});
@@ -141,12 +140,12 @@ io.on('connect',function(socketPlayer){
 
     socketPlayer.on('player-comes-to-live',function(data){
         let jsonTank = data.tank;
-        console.log("El jugador que volvio a la vida le quedan "+jsonTank.lives+" vidas");
         let tankSurvivor = sessionsManager.createTankInstance(jsonTank);
         sessionsManager.setTank(tankSurvivor);
         socketPlayer.broadcast.emit('tank-fighting-again',{tank:jsonTank});
     });
 
+    
 });
 
 httpServer.listen(3000,function(){

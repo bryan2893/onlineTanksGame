@@ -345,8 +345,6 @@ $(document).ready(function(){
             let tanke = new Tank(tank.id,area,ctx,l,r,b,u,tank.velocity,tank.actualDirection);
             tankeLocal = tanke;
 
-            console.log("Id de tankeLocal = "+tankeLocal.id);
-
             tanke.display('derecha');
         });
 
@@ -591,7 +589,6 @@ $(document).ready(function(){
     //Inicio de juego********************
     let iniciarJuego = function(){
         //Dibujar Escenario
-        console.log("Iniciando juego!");
     };
     //************************************/
 
