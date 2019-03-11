@@ -17,7 +17,7 @@ let wallConstructor = new WallConstructor();//se utiliza cada vez que se quiere 
 
 let wallWatcher = new WallWatcher(wallConstructor.getWalls());
 
-const puerto = 3000 | process.env;
+const PORT = process.env.PORT || 8080;
 
 
 const httpServer = http.createServer(app);//Se crea el servidor http y se envia como paramtero el app de express.
@@ -150,6 +150,6 @@ io.on('connect',function(socketPlayer){
     
 });
 
-httpServer.listen(puerto,function(){
-    console.log("Servidor de sockets escuchando en el puerto "+puerto);
+httpServer.listen(PORT,function(){
+    console.log("Servidor de sockets escuchando en el puerto "+PORT);
 });
